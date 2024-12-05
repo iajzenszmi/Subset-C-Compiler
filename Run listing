@@ -1,0 +1,83 @@
+ian@ian-Latitude-E7440:~$ nano subc.c
+ian@ian-Latitude-E7440:~$ gcc subc.c -o subc
+ian@ian-Latitude-E7440:~$ ./subc
+Usage: ./subc <input.c> <output.asm>
+ian@ian-Latitude-E7440:~$ ls *.c
+car_race_simulator.c  c_functions.c  fourier.c  goodev.c    goodevening.c              lex.yy.c  multitask.c   plotparab.c  rainpredict.c  test2.c  testg.c
+cars.c                clavc.c        goode2.c   goodeven.c  ianmartinajzenszmidtmsg.c  main.c    parser.tab.c  racetrack.c  subc.c         test.c   zorromsg.c
+ian@ian-Latitude-E7440:~$ nano input.c
+ian@ian-Latitude-E7440:~$ ./subc input.c output.asm
+Compilation successful: input.c -> output.asm
+ian@ian-Latitude-E7440:~$ nasm -f elf64 output.asm -o output.o
+ld output.o -o output
+ian@ian-Latitude-E7440:~$ ./output
+Hello, world!
+ian@ian-Latitude-E7440:~$ cat subc.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void compile(const char *input_file, const char *output_file) {
+    // Open the input file for reading
+    FILE *in = fopen(input_file, "r");
+    if (!in) {
+        perror("Error opening input file");
+        exit(1);
+    }
+
+    // Open the output file for writing (assembly code)
+    FILE *out = fopen(output_file, "w");
+    if (!out) {
+        perror("Error opening output file");
+        exit(1);
+    }
+
+    fprintf(out, "section .data\n");
+    fprintf(out, "    msg db 'Hello, world!', 0x0A\n");
+    fprintf(out, "section .text\n");
+    fprintf(out, "    global _start\n");
+    fprintf(out, "_start:\n");
+    fprintf(out, "    mov rax, 1\n");   // syscall: write
+    fprintf(out, "    mov rdi, 1\n");   // file descriptor: stdout
+    fprintf(out, "    lea rsi, [msg]\n"); // pointer to msg
+    fprintf(out, "    mov rdx, 14\n");  // message length
+    fprintf(out, "    syscall\n");
+    fprintf(out, "    mov rax, 60\n");  // syscall: exit
+    fprintf(out, "    xor rdi, rdi\n"); // exit code: 0
+    fprintf(out, "    syscall\n");
+
+    fclose(in);
+    fclose(out);
+}
+
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.c> <output.asm>\n", argv[0]);
+        return 1;
+    }
+
+    compile(argv[1], argv[2]);
+    printf("Compilation successful: %s -> %s\n", argv[1], argv[2]);
+    return 0;
+}
+ian@ian-Latitude-E7440:~$ cat input.c
+int main() {
+    printf("Hello, world!\n");
+    return 0;
+}
+ian@ian-Latitude-E7440:~$ cat output.asm
+section .data
+    msg db 'Hello, world!', 0x0A
+section .text
+    global _start
+_start:
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [msg]
+    mov rdx, 14
+    syscall
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+ian@ian-Latitude-E7440:~$ 
+
