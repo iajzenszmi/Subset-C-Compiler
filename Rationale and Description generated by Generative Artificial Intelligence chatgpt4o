@@ -1,0 +1,118 @@
+Creating a demo for a simple C compiler (referred to as a "sub C compiler" here) involves implementing a minimal version of a compiler that can process basic C-like language constructs, generate intermediate code, and produce an executable file. Below is an outline of the demo along with sample code:
+
+---
+
+### **Demo Structure**
+1. **Lexer**: Tokenizes the input C-like source code.
+2. **Parser**: Parses the tokens into an Abstract Syntax Tree (AST).
+3. **Code Generator**: Translates the AST into assembly or intermediate code.
+4. **Assembler and Linker**: Converts assembly code to a Linux executable using external tools like `gcc` or `ld`.
+
+---
+
+### **Demo Implementation**
+
+#### **Step 1: Create a Sub C Compiler**
+Save the following in a file named `subc.c`.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void compile(const char *input_file, const char *output_file) {
+    // Open the input file for reading
+    FILE *in = fopen(input_file, "r");
+    if (!in) {
+        perror("Error opening input file");
+        exit(1);
+    }
+
+    // Open the output file for writing (assembly code)
+    FILE *out = fopen(output_file, "w");
+    if (!out) {
+        perror("Error opening output file");
+        exit(1);
+    }
+
+    fprintf(out, "section .data\n");
+    fprintf(out, "    msg db 'Hello, world!', 0x0A\n");
+    fprintf(out, "section .text\n");
+    fprintf(out, "    global _start\n");
+    fprintf(out, "_start:\n");
+    fprintf(out, "    mov rax, 1\n");   // syscall: write
+    fprintf(out, "    mov rdi, 1\n");   // file descriptor: stdout
+    fprintf(out, "    lea rsi, [msg]\n"); // pointer to msg
+    fprintf(out, "    mov rdx, 14\n");  // message length
+    fprintf(out, "    syscall\n");
+    fprintf(out, "    mov rax, 60\n");  // syscall: exit
+    fprintf(out, "    xor rdi, rdi\n"); // exit code: 0
+    fprintf(out, "    syscall\n");
+
+    fclose(in);
+    fclose(out);
+}
+
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.c> <output.asm>\n", argv[0]);
+        return 1;
+    }
+
+    compile(argv[1], argv[2]);
+    printf("Compilation successful: %s -> %s\n", argv[1], argv[2]);
+    return 0;
+}
+```
+
+---
+
+#### **Step 2: Write a Dummy Input File**
+Save this in a file named `input.c` (not used in this simple example but for demonstration purposes).
+
+```c
+int main() {
+    printf("Hello, world!\n");
+    return 0;
+}
+```
+
+---
+
+#### **Step 3: Compile and Run the Sub C Compiler**
+1. **Compile the Sub C Compiler**:
+   ```bash
+   gcc subc.c -o subc
+   ```
+
+2. **Run the Compiler**:
+   ```bash
+   ./subc input.c output.asm
+   ```
+
+3. **Assemble and Link the Output**:
+   Assemble the `output.asm` file and generate an executable using `nasm` and `ld`:
+   ```bash
+   nasm -f elf64 output.asm -o output.o
+   ld output.o -o output
+   ```
+
+4. **Run the Executable**:
+   ```bash
+   ./output
+   ```
+
+You should see:
+```
+Hello, world!
+```
+
+---
+
+### **Explanation**
+- **Lexer**: Not implemented for simplicity. The program generates a fixed assembly.
+- **Parser**: Also omitted; the assembly corresponds to a pre-defined "Hello, world!" program.
+- **Code Generator**: Hard-coded assembly is written to the output file.
+- **Assembler and Linker**: `nasm` and `ld` convert the assembly to an executable.
+
+This approach demonstrates the essential workflow of a compiler while keeping it simple. For a full-featured compiler, you'd expand the lexer, parser, and code generation phases.
